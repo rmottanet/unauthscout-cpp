@@ -1,35 +1,13 @@
-#include <curl/curl.h>
 #include <string>
 #include <nlohmann/json.hpp>
 #include "github/api.hpp"
-
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
-    size_t total_size = size * nmemb;
-    output->append((char*)contents, total_size);
-    return total_size;
-}
+#include "helpers/http_client.hpp"
 
 namespace github {
     std::string get_user_raw(const std::string& username) {
-        CURL* curl = curl_easy_init();
-        std::string response;
-
-        if (curl) {
-            std::string url = "https://api.github.com/users/" + username;
-            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-            curl_easy_setopt(curl, CURLOPT_USERAGENT, "UnauthScout/0.3.0");
-
-            CURLcode res = curl_easy_perform(curl);
-            if (res != CURLE_OK) {
-                response = R"({"error": ")" + std::string(curl_easy_strerror(res)) + "\"}";
-            }
-
-            curl_easy_cleanup(curl);
-        }
-
-        return response;
+        helpers::HttpClient http_client;
+        std::string url = "https://api.github.com/users/" + username;
+        return http_client.get(url);
     }
 
     nlohmann::json normalize_user(const std::string& raw_user) {
@@ -50,25 +28,9 @@ namespace github {
     }
 
     std::string get_repos_raw(const std::string& username) {
-        CURL* curl = curl_easy_init();
-        std::string response;
-
-        if (curl) {
-            std::string url = "https://api.github.com/users/" + username + "/repos";
-            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-            curl_easy_setopt(curl, CURLOPT_USERAGENT, "UnauthScout/0.3.0");
-
-            CURLcode res = curl_easy_perform(curl);
-            if (res != CURLE_OK) {
-                response = R"({"error": ")" + std::string(curl_easy_strerror(res)) + "\"}";
-            }
-
-            curl_easy_cleanup(curl);
-        }
-
-        return response;
+        helpers::HttpClient http_client;
+        std::string url = "https://api.github.com/users/" + username + "/repos";
+        return http_client.get(url);
     }
 
     nlohmann::json normalize_repos(const std::string& raw_repos) {
